@@ -279,7 +279,7 @@ const H = 3600e3;
 const HSP_DEF = [5.6, 5.7, 5.4, 5.6, 5.7, 5.6, 5.9, 6.3, 6.2, 5.9, 5.4, 5.3];
 const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const SEM = ['dom','seg','ter','qua','qui','sex','sáb'];
-const defSettings = () => ({ tarifa: 0, credPct: 100, kwp: 0, pr: 80, perdaNublado: 50, hsp: HSP_DEF.slice(), lig: 50, diaLeitura: 1, saldoIni: 0 });
+const defSettings = () => ({ tarifa: 1.17, credPct: 76, kwp: 4.68, pr: 80, perdaNublado: 50, hsp: HSP_DEF.slice(), lig: 30, diaLeitura: 11, saldoIni: 0 });
 function load() {
 let d = null;
 try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
@@ -288,6 +288,7 @@ d.readings = Array.isArray(d.readings) ? d.readings : [];
 d.events = Array.isArray(d.events) ? d.events : [];
 d.settings = Object.assign(defSettings(), d.settings || {});
 if (!Array.isArray(d.settings.hsp) || d.settings.hsp.length !== 12) d.settings.hsp = HSP_DEF.slice();
+if (!(d.settings.tarifa > 0) && !(d.settings.kwp > 0)) { const p = defSettings(); ['tarifa', 'credPct', 'kwp', 'lig', 'diaLeitura'].forEach(k => d.settings[k] = p[k]); }
 return d;
 }
 let db = load();
