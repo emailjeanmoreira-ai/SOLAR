@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Solar">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#fcfcfb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1a19" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Monitor Solar</title>
+<style>
+:root{
+color-scheme: light;
+--bg:#f4f3f0; --surface:#fcfcfb; --surface2:#f0efec; --border:#e2e0da;
+--text:#0b0b0b; --text2:#52514e; --muted:#8a8983;
+--accent:#256abf; --accent-ink:#fff;
+--inj:#2a78d6; --rede:#eb6834; --ger:#1baf7a;
+--pos:#2a78d6; --neg:#e34948; --zero:#c9c7c0;
+--good:#0ca30c; --warn:#b97d00; --crit:#d03b3b;
+--grid:#e9e7e2;
+--shadow:0 1px 2px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+:root{
+color-scheme: dark;
+--bg:#111110; --surface:#1a1a19; --surface2:#242422; --border:#2e2e2b;
+--text:#f0efec; --text2:#c3c2b7; --muted:#8f8e86;
+--accent:#3987e5; --accent-ink:#fff;
+--inj:#3987e5; --rede:#d95926; --ger:#199e70;
+--pos:#3987e5; --neg:#e66767; --zero:#4a4a46;
+--good:#0ca30c; --warn:#fab219; --crit:#e66767;
+--grid:#2a2a27; --shadow:none;
+}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 8px;border-bottom:1px solid var(--border)}
+header h1{margin:0;font-size:20px;font-weight:700}
+header .sub{font-size:13px;color:var(--text2)}
+main{max-width:720px;margin:0 auto;padding:12px 16px 24px}
+.view{display:none}.view.on{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin:0 0 12px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 10px;font-size:16px}
+.card h3{margin:14px 0 8px;font-size:14px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.hint{font-size:13px;color:var(--text2)}
+.muted{color:var(--muted)}
+label.f{display:block;margin:0 0 12px}
+label.f>span{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+label.f>small{display:block;font-size:12.5px;color:var(--text2);margin-top:4px}
+input,select,textarea{font:inherit;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0}
+input.big{font-size:26px;font-weight:700;padding:12px 14px;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.code{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:1px 7px;margin-right:6px;color:#fff;vertical-align:1px}
+.code.c03{background:var(--rede)}.code.c103{background:var(--inj)}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+button{font:inherit;border:0;border-radius:10px;padding:12px 14px;background:var(--surface2);color:var(--text);font-weight:600;cursor:pointer;border:1px solid var(--border)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);width:100%;font-size:17px;padding:14px}
+button.warnbtn{background:var(--crit);border-color:var(--crit);color:#fff}
+button.small{padding:6px 10px;font-size:13px;border-radius:8px}
+button.ghost{background:transparent}
+button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.evbtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.evbtns button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;font-size:13px}
+.evbtns svg{width:22px;height:22px}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:20;background:var(--text);color:var(--bg);padding:12px 14px;border-radius:12px;font-size:14px;opacity:0;transform:translateY(10px);transition:.25s;pointer-events:none;max-width:688px;margin:0 auto}
+.toast.on{opacity:1;transform:none}
+.msg{font-size:14px;border-radius:10px;padding:10px 12px;margin:0 0 12px;background:var(--surface2);border:1px solid var(--border)}
+.msg.warn{border-color:var(--warn)}
+.msg.warn b{color:var(--warn)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav.tabs button{flex:1;background:none;border:0;padding:4px 2px;font-size:11px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button.on{color:var(--accent)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{background:var(--surface2);border-radius:12px;padding:10px 12px;min-width:0}
+.tile .t{font-size:12.5px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.tile .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .r{font-size:14px;color:var(--text2);font-variant-numeric:tabular-nums}
+.tile.wide{grid-column:1/-1}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.d-inj{background:var(--inj)}.d-rede{background:var(--rede)}.d-ger{background:var(--ger)}.d-cons{background:var(--text2)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;padding:7px 12px;border-radius:999px;font-size:13.5px}
+.chips button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:14.5px}
+.kv:last-child{border-bottom:0}
+.kv b{font-variant-numeric:tabular-nums;text-align:right}
+.est{font-size:11px;font-weight:600;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:0 4px;margin-left:4px;vertical-align:1px}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+.chart{position:relative;margin:4px 0 4px;touch-action:pan-y}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart text{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--text2);margin:0 0 6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.tip{position:absolute;top:0;pointer-events:none;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.15);display:none;min-width:150px;z-index:3}
+.tip .h{font-weight:700;margin-bottom:4px}
+.tip .l{display:flex;align-items:center;gap:6px;justify-content:space-between}
+.tip .l span:first-child{display:inline-flex;align-items:center;gap:6px;color:var(--text2)}
+.tip .l b{font-variant-numeric:tabular-nums}
+details.tbl summary{font-size:13px;color:var(--accent);cursor:pointer;margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;margin-top:6px}
+th,td{padding:6px 4px;border-bottom:1px solid var(--border);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--text2);font-weight:600}
+.tblwrap{overflow-x:auto}
+.day{margin-bottom:12px}
+.dayh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.dayh b{font-size:15px}
+.evchip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:3px 4px 3px 10px;margin:0 4px 6px 0}
+.evchip button{padding:0 6px;border:0;background:none;color:var(--muted);font-size:16px;line-height:1}
+.rd{display:grid;grid-template-columns:52px 1fr 1fr 34px;gap:6px;align-items:center;font-size:14px;padding:7px 0;border-top:1px solid var(--border);font-variant-numeric:tabular-nums}
+.rd .dd{font-size:12px;color:var(--muted)}
+.rd button{padding:4px 0;font-size:13px;background:none;border:0;color:var(--muted)}
+.rd button.confirm{color:var(--crit);font-weight:700}
+.hspgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.hspgrid label{font-size:12px;color:var(--text2)}
+.hspgrid input{padding:8px;font-size:15px}
+.banner{background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:12px;margin-bottom:12px;font-size:14px}
+.banner button{margin-top:8px}
+.empty{text-align:center;padding:24px 8px;color:var(--text2)}
+.inl{display:none;margin-top:10px}
+.inl.on{display:flex}
+.sep{height:1px;background:var(--border);margin:12px 0}
+</style>
+</head>
+<body>
+<header>
+<h1 id="htitle">Monitor Solar</h1>
+<div class="sub" id="hsub">Leituras do relógio · códigos 03 e 103</div>
+</header>
+<main>
+<div id="sampleBanner"></div>
+<!-- LANÇAR -->
+<section class="view on" id="v-lancar">
+<div id="setupHint"></div>
+<div class="card">
+<h2>Nova leitura do relógio</h2>
+<label class="f"><span>Data e hora da leitura</span>
+<div class="row"><input type="datetime-local" id="fData"><button type="button" class="small" id="btnAgora" style="flex:none">Agora</button></div>
+</label>
+<label class="f"><span><i class="code c03">03</i>Energia consumida da rede (kWh)</span>
+<input class="big" id="f03" inputmode="decimal" autocomplete="off" placeholder="00000">
+<small id="h03"></small>
+</label>
+<label class="f"><span><i class="code c103">103</i>Energia injetada na rede (kWh)</span>
+<input class="big" id="f103" inputmode="decimal" autocomplete="off" placeholder="00000">
+<small id="h103"></small>
+</label>
+<details style="margin:0 0 12px">
+<summary class="hint" style="cursor:pointer">Opcional: geração do inversor e observação</summary>
+<label class="f" style="margin-top:10px"><span>Geração de hoje no inversor (kWh)</span>
+<input id="fGer" inputmode="decimal" autocomplete="off" placeholder="Deixe vazio se não tiver">
+<small>Se você informar, o app usa esse número no lugar da estimativa de geração do dia.</small>
+</label>
+<label class="f"><span>Observação</span><input id="fObs" autocomplete="off" placeholder="Ex.: chuva forte à tarde"></label>
+</details>
+<div id="saveWarn"></div>
+<button class="primary" id="btnSalvar">Salvar leitura</button>
+</div>
+<div class="card">
+<h2>Ocorrências do dia <span class="hint" id="evDia"></span></h2>
+<div class="evbtns">
+<button type="button" id="evNublado" aria-pressed="false">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8a5 5 0 1 1 1.6-9.74A6 6 0 0 1 21 12.5 4.5 4.5 0 0 1 17.5 19z"/></svg>
+<span>Tempo nublado</span></button>
+<button type="button" id="evLimpeza">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 4 6 7.2 6 10.5A6 6 0 0 1 6 13.5C6 10.2 9 7 12 3z"/></svg>
+<span>Limpeza das placas</span></button>
+<button type="button" id="evFalta">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+<span>Falta de energia</span></button>
+</div>
+<div class="inl row" id="faltaRow">
+<input id="fFaltaH" inputmode="decimal" placeholder="Quantas horas sem energia?">
+<button type="button" class="small" id="btnFaltaOk" style="flex:none">Registrar</button>
+</div>
+<div id="evList" style="margin-top:10px"></div>
+</div>
+<div class="card">
+<h2>Hoje até agora</h2>
+<div id="hojeTiles"></div>
+</div>
+</section>
+<!-- RESUMO -->
+<section class="view" id="v-resumo">
+<div class="chips" id="chipsResumo"></div>
+<div id="resumoBody"></div>
+</section>
+<!-- GRÁFICOS -->
+<section class="view" id="v-graficos">
+<div class="chips" id="chipsGraf"></div>
+<div id="grafBody"></div>
+</section>
+<!-- HISTÓRICO -->
+<section class="view" id="v-historico">
+<div id="histBody"></div>
+</section>
+<!-- AJUSTES -->
+<section class="view" id="v-ajustes">
+<div class="card">
+<h2>Conta de luz</h2>
+<label class="f"><span>Tarifa com impostos (R$ por kWh)</span>
+<input id="sTarifa" inputmode="decimal" placeholder="Ex.: 0,95">
+<small>Na sua conta: valor total da energia ÷ kWh faturados. Use o valor com ICMS, PIS e COFINS.</small></label>
+<label class="f"><span>Quanto vale cada kWh injetado (% da tarifa)</span>
+<input id="sCred" inputmode="decimal" placeholder="100">
+<small>Use 100% se o sistema foi ligado antes de 2023. Se foi ligado depois, a Lei 14.300 cobra parte do “Fio B” sobre a energia compensada (60% do Fio B em 2026), então o crédito vale um pouco menos que a tarifa. Ajuste comparando com a conta.</small></label>
+<label class="f"><span>Tipo de ligação</span>
+<select id="sLig"><option value="30">Monofásica (mínimo 30 kWh)</option><option value="50">Bifásica (mínimo 50 kWh)</option><option value="100">Trifásica (mínimo 100 kWh)</option></select>
+<small>Usado para estimar a conta mínima (custo de disponibilidade).</small></label>
+<label class="f"><span>Dia em que a concessionária lê o relógio</span>
+<input id="sDia" inputmode="numeric" placeholder="1">
+<small>Define o “ciclo” da conta. Use 1 para mês calendário.</small></label>
+<label class="f"><span>Créditos que você já tinha (kWh)</span>
+<input id="sSaldoIni" inputmode="decimal" placeholder="0">
+<small>Saldo de créditos da conta antes da primeira leitura no app. Entra no saldo acumulado.</small></label>
+</div>
+<div class="card">
+<h2>Sistema solar</h2>
+<label class="f"><span>Potência instalada das placas (kWp)</span>
+<input id="sKwp" inputmode="decimal" placeholder="Ex.: 8,5">
+<small>Está no projeto ou na nota do instalador (nº de placas × potência de cada placa ÷ 1000). Sem esse dado o app não estima a geração.</small></label>
+<label class="f"><span>Eficiência do sistema (%)</span>
+<input id="sPr" inputmode="decimal" placeholder="80">
+<small>Perdas de inversor, calor, cabos e sujeira. 75–82% é o normal.</small></label>
+<label class="f"><span>Redução em dia nublado (%)</span>
+<input id="sNub" inputmode="decimal" placeholder="50">
+<small>Quanto a geração cai num dia que você marca como nublado.</small></label>
+<label class="f"><span>Sol pleno por mês (horas/dia)</span>
+<div class="hspgrid" id="hspGrid"></div>
+<small>Valores aproximados para o Oeste da Bahia. Se o projeto do instalador trouxer a geração mensal prevista, ajuste aqui.</small></label>
+</div>
+<div class="card">
+<h2>Seus dados</h2>
+<p class="hint" style="margin-top:0">Os dados ficam só neste celular. Faça um backup de vez em quando (pode mandar para você mesmo no WhatsApp ou salvar no app Arquivos).</p>
+<div style="display:grid;gap:8px">
+<button type="button" id="btnBackup">Fazer backup (arquivo .json)</button>
+<button type="button" id="btnImport">Restaurar backup</button>
+<input type="file" id="fileImport" accept=".json,application/json" hidden>
+<button type="button" id="btnCsv">Exportar planilha (CSV, abre no Excel)</button>
+<div class="sep"></div>
+<button type="button" id="btnApagar" class="ghost" style="color:var(--crit)">Apagar todos os dados</button>
+</div>
+<p class="hint" id="infoDados"></p>
+</div>
+<div class="card">
+<h2>Como o app calcula</h2>
+<div class="hint">
+<p style="margin-top:0"><b>Consumo da rede</b> = aumento do código 03. <b>Injetado</b> = aumento do código 103. Esses dois são medidos.</p>
+<p><b>Geração</b> é estimada: potência × sol pleno do mês × eficiência, reduzida em dia nublado e nas horas de falta de energia (o inversor desliga quando falta energia). Se você anotar a geração do inversor, o app usa o número real.</p>
+<p><b>Autoconsumo</b> = geração − injetado (energia das placas usada na hora, sem passar pelo relógio). <b>Consumo total</b> = consumo da rede + autoconsumo.</p>
+<p><b>Saldo</b> = injetado − consumido da rede. Saldo positivo vira crédito; negativo é energia a pagar.</p>
+<p style="margin-bottom:0">Quando a leitura fica de um dia para o outro, o consumo é dividido pelas horas de cada dia e a injeção pelas horas de sol (6h às 18h).</p>
+</div>
+</div>
+</section>
+</main>
+<nav class="tabs" id="tabs">
+<button data-v="lancar" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Lançar</button>
+<button data-v="resumo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9h10M7 13h6M7 17h8"/></svg>Resumo</button>
+<button data-v="graficos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/></svg>Gráficos</button>
+<button data-v="historico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
+<button data-v="ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Ajustes</button>
+</nav>
+<div class="toast" id="toast"></div>
+<script>
+'use strict';
+const KEY = 'monitorSolar.v1';
+const H = 3600e3;
+const HSP_DEF = [5.6, 5.7, 5.4, 5.6, 5.7, 5.6, 5.9, 6.3, 6.2, 5.9, 5.4, 5.3];
+const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const SEM = ['dom','seg','ter','qua','qui','sex','sáb'];
+const defSettings = () => ({ tarifa: 0, credPct: 100, kwp: 0, pr: 80, perdaNublado: 50, hsp: HSP_DEF.slice(), lig: 50, diaLeitura: 1, saldoIni: 0 });
+function load() {
+let d = null;
+try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+if (!d || typeof d !== 'object') d = {};
+d.readings = Array.isArray(d.readings) ? d.readings : [];
+d.events = Array.isArray(d.events) ? d.events : [];
+d.settings = Object.assign(defSettings(), d.settings || {});
+if (!Array.isArray(d.settings.hsp) || d.settings.hsp.length !== 12) d.settings.hsp = HSP_DEF.slice();
+return d;
+}
+let db = load();
+function save() {
+try { localStorage.setItem(KEY, JSON.stringify(db)); }
+catch (e) { toast('Não consegui salvar no celular. Faça um backup agora.'); }
+}
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function dayKey(ms) { const d = new Date(ms); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function dayStart(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d).getTime(); }
+function addDays(k, n) { const [y, m, d] = k.split('-').map(Number); return dayKey(new Date(y, m - 1, d + n).getTime()); }
+function diffDays(a, b) { return Math.round((dayStart(b) - dayStart(a)) / 864e5); }
+function parseNum(s) {
+s = String(s == null ? '' : s).trim().replace(/\s/g, '');
+if (!s) return null;
+if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+else s = s.replace(',', '.');
+const n = Number(s);
+return isFinite(n) ? n : null;
+}
+const nf = (n, d) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+function kwh(n, sign) {
+if (n == null || !isFinite(n)) return '—';
+const a = Math.abs(n), d = a < 100 ? 1 : 0;
+return (sign && n > 0.05 ? '+' : '') + nf(n, d) + ' kWh';
+}
+function brl(n, sign) {
+if (n == null || !isFinite(n)) return '—';
+return (sign && n > 0.005 ? '+' : '') + n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+function fmtDay(k, withYear) { const [y, m, d] = k.split('-').map(Number); const w = SEM[new Date(y, m - 1, d).getDay()]; return w + ', ' + pad(d) + '/' + pad(m) + (withYear ? '/' + y : ''); }
+function fmtDM(k) { const [, m, d] = k.split('-').map(Number); return pad(d) + '/' + pad(m); }
+function fmtTime(ms) { const d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function localInput(ms) { const d = new Date(ms); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function ago(ms) { const m = Math.round((Date.now() - ms) / 60000); if (m < 60) return 'há ' + m + ' min'; const h = m / 60; if (h < 48) return 'há ' + nf(h, h < 10 ? 1 : 0) + ' h'; return 'há ' + Math.round(h / 24) + ' dias'; }
+let toastT;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 3800); }
+function sortedReadings() { return db.readings.slice().sort((a, b) => a.t - b.t); }
+function pieces(a, b) {
+const out = []; let s = a;
+while (s < b) {
+const k = dayKey(s), ds = dayStart(k), de = dayStart(addDays(k, 1)), e = Math.min(b, de);
+const dl = Math.max(0, Math.min(e, ds + 18 * H) - Math.max(s, ds + 6 * H));
+out.push({ key: k, tot: e - s, dl }); s = e;
+}
+return out;
+}
+function cycleOf(k) {
+const D = Math.min(28, Math.max(1, Math.round(db.settings.diaLeitura || 1)));
+let [y, m, d] = k.split('-').map(Number);
+let sy = y, sm = m;
+if (d < D) { sm--; if (sm < 1) { sm = 12; sy--; } }
+const start = sy + '-' + pad(sm) + '-' + pad(D);
+let ey = sy, em = sm + 1; if (em > 12) { em = 1; ey++; }
+const end = addDays(ey + '-' + pad(em) + '-' + pad(D), -1);
+const label = D === 1 ? (MESES[sm - 1] + '/' + String(sy).slice(2)) : (fmtDM(start) + '–' + fmtDM(end));
+return { start, end, label };
+}
+function compute() {
+const S = db.settings;
+const T = +S.tarifa || 0, C = T * (+S.credPct || 0) / 100;
+const R = sortedReadings();
+const days = new Map();
+const get = k => {
+if (!days.has(k)) days.set(k, { key: k, rede: 0, inj: 0, dl: 0, readings: 0, gerInv: null, cloudy: false, clean: 0, outH: 0 });
+return days.get(k);
+};
+if (R.length) {
+let k = dayKey(R[0].t); const last = dayKey(R[R.length - 1].t);
+while (k <= last) { get(k); k = addDays(k, 1); }
+}
+R.forEach(r => {
+const d = get(dayKey(r.t)); d.readings++;
+if (r.ger != null && isFinite(r.ger)) d.gerInv = Math.max(d.gerInv || 0, +r.ger);
+});
+const intervals = [];
+for (let i = 1; i < R.length; i++) {
+const a = R[i - 1], b = R[i];
+const d03 = Math.max(0, b.r03 - a.r03), d103 = Math.max(0, b.r103 - a.r103);
+const tt = b.t - a.t; if (tt <= 0) continue;
+const ps = pieces(a.t, b.t), tdl = ps.reduce((s, p) => s + p.dl, 0);
+ps.forEach(p => {
+const d = get(p.key);
+d.rede += d03 * p.tot / tt;
+d.inj += tdl > 0 ? d103 * p.dl / tdl : d103 * p.tot / tt;
+d.dl += p.dl;
+});
+intervals.push({ a: a.t, b: b.t, d03, d103 });
+}
+db.events.forEach(e => {
+const d = days.get(dayKey(e.t)); if (!d) return;
+if (e.type === 'nublado') d.cloudy = true;
+else if (e.type === 'limpeza') d.clean++;
+else if (e.type === 'falta') d.outH += +e.horas || 0;
+});
+const list = [...days.values()].sort((a, b) => a.key < b.key ? -1 : 1);
+let acc = +S.saldoIni || 0;
+list.forEach(d => {
+const m = +d.key.slice(5, 7) - 1;
+d.cov = Math.min(1, d.dl / (12 * H));
+d.complete = d.cov >= 0.95;
+d.potencial = S.kwp > 0 ? S.kwp * (+S.hsp[m] || 0) * (S.pr / 100) : null;
+let est = null;
+if (d.potencial != null) est = d.potencial * (d.cloudy ? 1 - S.perdaNublado / 100 : 1) * Math.max(0, 1 - d.outH / 12) * d.cov;
+d.genSrc = d.gerInv != null ? 'inversor' : (est != null ? 'estimada' : null);
+d.gen = d.gerInv != null ? d.gerInv : est;
+d.genAdj = false;
+if (d.gen != null && d.gen < d.inj) { d.gen = d.inj; d.genAdj = true; }
+d.auto = d.gen != null ? d.gen - d.inj : null;
+d.cons = d.auto != null ? d.rede + d.auto : null;
+d.saldo = d.inj - d.rede;
+acc += d.saldo; d.acc = acc;
+d.perdaFalta = d.potencial != null ? d.potencial * Math.min(1, d.outH / 12) : 0;
+});
+return { list, intervals, T, C, R };
+}
+function money(saldo, T, C) { return saldo >= 0 ? saldo * C : saldo * T; }
+function aggregate(c, start, end) {
+const ds = c.list.filter(d => d.key >= start && d.key <= end);
+const a = { n: ds.length, days: ds, rede: 0, inj: 0, gen: 0, auto: 0, cons: 0, genN: 0, estN: 0, cloudyN: 0, cleanN: 0, outN: 0, outH: 0, perda: 0, completeN: 0 };
+ds.forEach(d => {
+a.rede += d.rede; a.inj += d.inj;
+if (d.gen != null) { a.gen += d.gen; a.auto += d.auto; a.cons += d.cons; a.genN++; if (d.genSrc === 'estimada') a.estN++; }
+if (d.cloudy) a.cloudyN++;
+a.cleanN += d.clean; if (d.outH > 0) { a.outN++; a.outH += d.outH; a.perda += d.perdaFalta; }
+if (d.complete) a.completeN++;
+});
+a.hasGen = a.genN > 0 && a.genN === a.n;
+a.saldo = a.inj - a.rede;
+const prev = c.list.filter(d => d.key < start);
+a.accStart = prev.length ? prev[prev.length - 1].acc : (+db.settings.saldoIni || 0);
+const upto = c.list.filter(d => d.key <= end);
+a.accEnd = upto.length ? upto[upto.length - 1].acc : (+db.settings.saldoIni || 0);
+return a;
+}
+const PERIODOS = [
+['hoje', 'Hoje'], ['7d', '7 dias'], ['30d', '30 dias'], ['ciclo', 'Ciclo atual'], ['cicloAnt', 'Ciclo anterior'], ['tudo', 'Tudo']
+];
+let periodo = '30d';
+function rangeOf(p, c) {
+const today = dayKey(Date.now());
+const first = c.list.length ? c.list[0].key : today;
+if (p === 'hoje') return [today, today, 'Hoje'];
+if (p === '7d') return [addDays(today, -6), today, 'Últimos 7 dias'];
+if (p === '30d') return [addDays(today, -29), today, 'Últimos 30 dias'];
+if (p === 'ciclo') { const cy = cycleOf(today); return [cy.start, cy.end, 'Ciclo ' + cy.label]; }
+if (p === 'cicloAnt') { const cy = cycleOf(addDays(cycleOf(today).start, -1)); return [cy.start, cy.end, 'Ciclo ' + cy.label]; }
+return [first, today, 'Desde o início'];
+}
+function chipsHtml() { return PERIODOS.map(([k, t]) => `<button data-p="${k}" class="${k === periodo ? 'on' : ''}">${t}</button>`).join(''); }
+let view = 'lancar';
+function show(v) {
+view = v;
+document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
+document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+const titles = { lancar: ['Monitor Solar', 'Leituras do relógio · códigos 03 e 103'], resumo: ['Resumo', 'Energia e dinheiro'], graficos: ['Gráficos', 'Toque no gráfico para ver os valores'], historico: ['Histórico', 'Todas as leituras e ocorrências'], ajustes: ['Ajustes', 'Tarifa, sistema e backup'] };
+$('#htitle').textContent = titles[v][0]; $('#hsub').textContent = titles[v][1];
+render();
+window.scrollTo(0, 0);
+}
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(b.dataset.v); });
+document.addEventListener('click', e => {
+const b = e.target.closest('.chips button'); if (!b) return;
+periodo = b.dataset.p; render();
+});
+function formTime() { const v = $('#fData').value; const t = v ? new Date(v).getTime() : Date.now(); return isFinite(t) ? t : Date.now(); }
+function setNow() { $('#fData').value = localInput(Date.now()); }
+$('#btnAgora').onclick = () => { setNow(); renderLancar(); };
+$('#fData').addEventListener('change', renderLancar);
+['#f03', '#f103'].forEach(s => $(s).addEventListener('input', () => { pendingWarn = null; $('#saveWarn').innerHTML = ''; $('#btnSalvar').textContent = 'Salvar leitura'; $('#btnSalvar').classList.remove('warnbtn'); }));
+function neighbors(t) {
+const R = sortedReadings(); let prev = null, next = null;
+for (const r of R) { if (r.t <= t) prev = r; else { next = r; break; } }
+return { prev, next };
+}
+let pendingWarn = null;
+$('#btnSalvar').onclick = () => {
+const t = formTime();
+const r03 = parseNum($('#f03').value), r103 = parseNum($('#f103').value);
+if (r03 == null || r103 == null) { toast('Informe os dois números: código 03 e código 103.'); (r03 == null ? $('#f03') : $('#f103')).focus(); return; }
+const ger = parseNum($('#fGer').value), obs = $('#fObs').value.trim();
+const { prev, next } = neighbors(t);
+const probs = [];
+if (prev) {
+if (r03 < prev.r03) probs.push(`o 03 (${nf(r03, 0)}) é menor que a leitura anterior (${nf(prev.r03, 0)})`);
+if (r103 < prev.r103) probs.push(`o 103 (${nf(r103, 0)}) é menor que a leitura anterior (${nf(prev.r103, 0)})`);
+const hrs = Math.max(1, (t - prev.t) / H);
+const lim = db.settings.kwp > 0 ? db.settings.kwp * hrs * 1.2 : null;
+if (lim && r103 - prev.r103 > lim) probs.push(`o 103 subiu ${nf(r103 - prev.r103, 0)} kWh em ${nf(hrs, 1)} h, mais do que as placas conseguem gerar`);
+}
+if (next) {
+if (r03 > next.r03) probs.push(`o 03 é maior que a leitura seguinte (${nf(next.r03, 0)})`);
+if (r103 > next.r103) probs.push(`o 103 é maior que a leitura seguinte (${nf(next.r103, 0)})`);
+}
+const sig = [t, r03, r103].join('|');
+if (probs.length && pendingWarn !== sig) {
+pendingWarn = sig;
+$('#saveWarn').innerHTML = `<div class="msg warn"><b>Confira:</b> ${probs.join('; ')}. O relógio só aumenta. Se estiver certo, toque de novo para salvar.</div>`;
+$('#btnSalvar').textContent = 'Salvar mesmo assim'; $('#btnSalvar').classList.add('warnbtn');
+return;
+}
+pendingWarn = null;
+const rec = { id: uid(), t, r03, r103 };
+if (ger != null) rec.ger = ger;
+if (obs) rec.obs = obs;
+db.readings.push(rec); save();
+let msg = 'Leitura salva.';
+if (prev) msg = `Leitura salva. Desde ${fmtTime(prev.t)}${dayKey(prev.t) !== dayKey(t) ? ' de ' + fmtDM(dayKey(prev.t)) : ''}: ${kwh(r103 - prev.r103, true)} injetados e ${kwh(r03 - prev.r03, true)} consumidos da rede.`;
+toast(msg);
+['#f03', '#f103', '#fGer', '#fObs'].forEach(s => $(s).value = '');
+$('#saveWarn').innerHTML = ''; $('#btnSalvar').textContent = 'Salvar leitura'; $('#btnSalvar').classList.remove('warnbtn');
+setNow(); render();
+};
+function evDayKey() { return dayKey(formTime()); }
+$('#evNublado').onclick = () => {
+const k = evDayKey();
+const ex = db.events.filter(e => e.type === 'nublado' && dayKey(e.t) === k);
+if (ex.length) { db.events = db.events.filter(e => !ex.includes(e)); toast('Dia desmarcado como nublado.'); }
+else { db.events.push({ id: uid(), type: 'nublado', t: dayStart(k) + 12 * H }); toast('Dia marcado como nublado.'); }
+save(); render();
+};
+$('#evLimpeza').onclick = () => { db.events.push({ id: uid(), type: 'limpeza', t: formTime() }); save(); toast('Limpeza das placas registrada.'); render(); };
+$('#evFalta').onclick = () => { $('#faltaRow').classList.toggle('on'); if ($('#faltaRow').classList.contains('on')) $('#fFaltaH').focus(); };
+$('#btnFaltaOk').onclick = () => {
+const h = parseNum($('#fFaltaH').value);
+if (h == null || h <= 0) { toast('Informe quantas horas ficou sem energia (ex.: 2 ou 0,5).'); return; }
+db.events.push({ id: uid(), type: 'falta', t: formTime(), horas: h }); save();
+$('#fFaltaH').value = ''; $('#faltaRow').classList.remove('on');
+toast('Falta de energia registrada: ' + nf(h, h % 1 ? 1 : 0) + ' h.'); render();
+};
+const EVN = { nublado: 'Nublado', limpeza: 'Limpeza das placas', falta: 'Falta de energia' };
+function evLabel(e) { return e.type === 'nublado' ? 'Dia nublado' : e.type === 'limpeza' ? 'Limpeza às ' + fmtTime(e.t) : 'Falta de energia: ' + nf(+e.horas, e.horas % 1 ? 1 : 0) + ' h (' + fmtTime(e.t) + ')'; }
+function tile(title, dotCls, v, r, extra) {
+const est = extra && extra.est ? '<span class="est" style="margin-left:0">estimado</span>' : '';
+const rr = [r, est].filter(x => x != null && x !== '').join(' ');
+return `<div class="tile${extra && extra.wide ? ' wide' : ''}"><div class="t">${dotCls ? `<i class="dot ${dotCls}"></i>` : ''}${title}</div><div class="v">${v}</div>${rr ? `<div class="r">${rr}</div>` : ''}</div>`;
+}
+function renderLancar() {
+const t = formTime(), k = dayKey(t);
+const { prev } = neighbors(t);
+$('#h03').textContent = prev ? `Última: ${nf(prev.r03, prev.r03 % 1 ? 1 : 0)} (${fmtDay(dayKey(prev.t))} ${fmtTime(prev.t)}, ${ago(prev.t)})` : 'Primeira leitura: digite o número que aparece no relógio.';
+$('#h103').textContent = prev ? `Última: ${nf(prev.r103, prev.r103 % 1 ? 1 : 0)}` : '';
+$('#f03').placeholder = prev ? nf(prev.r03, 0) : '00000';
+$('#f103').placeholder = prev ? nf(prev.r103, 0) : '00000';
+const today = dayKey(Date.now());
+$('#evDia').textContent = k === today ? '(hoje)' : '(' + fmtDay(k) + ')';
+const evs = db.events.filter(e => dayKey(e.t) === k).sort((a, b) => a.t - b.t);
+$('#evNublado').setAttribute('aria-pressed', evs.some(e => e.type === 'nublado') ? 'true' : 'false');
+$('#evList').innerHTML = evs.length ? evs.map(e => `<span class="evchip">${esc(evLabel(e))}<button data-delev="${e.id}" aria-label="Remover">×</button></span>`).join('') : '<span class="hint">Nenhuma ocorrência registrada neste dia.</span>';
+// setup hint
+const S = db.settings;
+const falta = [];
+if (!(S.tarifa > 0)) falta.push('a tarifa');
+if (!(S.kwp > 0)) falta.push('a potência das placas');
+$('#setupHint').innerHTML = falta.length ? `<div class="banner">Para ver valores em reais e a geração estimada, informe ${falta.join(' e ')} em <b>Ajustes</b>.<br><button class="small" onclick="show('ajustes')">Abrir Ajustes</button></div>` : '';
+// hoje
+const c = compute();
+const d = c.list.find(x => x.key === today);
+if (!d || !c.R.length || (d.readings === 0 && d.dl === 0 && d.rede === 0)) {
+$('#hojeTiles').innerHTML = `<p class="hint" style="margin:0">${c.R.length ? 'Ainda não há leitura hoje. Quando você lançar a primeira, o app compara com a última leitura e mostra o resultado do dia.' : 'Lance a primeira leitura. A partir da segunda, o app calcula quanto foi consumido e injetado.'}</p>`;
+return;
+}
+const saldoR = money(d.saldo, c.T, c.C);
+$('#hojeTiles').innerHTML = `<div class="tiles">
+${tile('Injetado na rede', 'd-inj', kwh(d.inj), c.T ? brl(d.inj * c.C) + ' em créditos' : null)}
+${tile('Consumo da rede', 'd-rede', kwh(d.rede), c.T ? brl(d.rede * c.T) : null)}
+${tile('Geração', 'd-ger', d.gen != null ? kwh(d.gen) : '—', d.gen != null ? (c.T ? brl(d.auto * c.T + d.inj * c.C) + ' de economia' : null) : 'informe a potência em Ajustes', { est: d.genSrc === 'estimada' })}
+${tile('Saldo do dia', null, `<span class="${d.saldo >= 0 ? 'pos' : 'neg'}">${kwh(d.saldo, true)}</span>`, c.T ? `<span class="${d.saldo >= 0 ? 'pos' : 'neg'}">${brl(saldoR, true)}</span>` : null)}
+${tile('Saldo acumulado de créditos', null, `<span class="${d.acc >= 0 ? 'pos' : 'neg'}">${kwh(d.acc, true)}</span>`, c.T ? `<span class="${d.acc >= 0 ? 'pos' : 'neg'}">${brl(money(d.acc, c.T, c.C), true)}</span>` : null, { wide: true })}
+</div>
+${d.cov < 0.95 ? `<p class="hint" style="margin:10px 0 0">Dia ainda em andamento: os números cobrem até a última leitura (${fmtTime(c.R[c.R.length - 1].t)}).</p>` : ''}`;
+}
+document.addEventListener('click', e => {
+const b = e.target.closest('[data-delev]'); if (!b) return;
+if (!b.classList.contains('confirm')) { b.classList.add('confirm'); b.textContent = 'apagar?'; setTimeout(() => { b.classList.remove('confirm'); b.textContent = '×'; }, 3000); return; }
+db.events = db.events.filter(x => x.id !== b.dataset.delev); save(); render();
+});
+function kvRow(t, v, cls) { return `<div class="kv"><span>${t}</span><b class="${cls || ''}">${v}</b></div>`; }
+function renderResumo() {
+$('#chipsResumo').innerHTML = chipsHtml();
+const c = compute();
+if (c.R.length < 2) { $('#resumoBody').innerHTML = emptyHtml(); return; }
+const [s, e, label] = rangeOf(periodo, c);
+const a = aggregate(c, s, e);
+const T = c.T, C = c.C, hasT = T > 0;
+if (!a.n) { $('#resumoBody').innerHTML = `<div class="card"><p class="hint" style="margin:0">Sem leituras em: ${label}.</p></div>`; return; }
+const first = a.days[0].key, last = a.days[a.days.length - 1].key;
+const est = a.estN > 0;
+const econ = a.hasGen ? a.auto * T + a.inj * C : null;
+const saldoR = money(a.saldo, T, C);
+let html = `<div class="card"><h2>${label}</h2><p class="hint" style="margin:-4px 0 12px">${fmtDay(first, true)} a ${fmtDay(last, true)} · ${a.n} dia${a.n > 1 ? 's' : ''} com dados</p>
+<h3>Energia</h3>
+<div class="tiles">
+${tile('Geração', 'd-ger', a.hasGen ? kwh(a.gen) : '—', a.hasGen ? null : 'informe a potência em Ajustes', { est })}
+${tile('Consumo total do local', 'd-cons', a.hasGen ? kwh(a.cons) : '—', a.hasGen ? 'rede + autoconsumo' : null, { est })}
+${tile('Consumo da rede (03)', 'd-rede', kwh(a.rede), null)}
+${tile('Injetado na rede (103)', 'd-inj', kwh(a.inj), null)}
+${tile('Autoconsumo', 'd-ger', a.hasGen ? kwh(a.auto) : '—', 'usado direto das placas', { est })}
+${tile('Saldo do período', null, `<span class="${a.saldo >= 0 ? 'pos' : 'neg'}">${kwh(a.saldo, true)}</span>`, 'injetado − rede')}
+</div>
+<h3>Dinheiro</h3>
+${hasT ? `<div class="tiles">
+${tile('Economia com as placas', 'd-ger', econ != null ? brl(econ) : '—', econ != null ? 'autoconsumo + créditos' : null, { est })}
+${tile('Custo do consumo total', 'd-cons', a.hasGen ? brl(a.cons * T) : '—', 'se não tivesse placas', { est })}
+${tile('Energia comprada da rede', 'd-rede', brl(a.rede * T), null)}
+${tile('Créditos gerados', 'd-inj', brl(a.inj * C), null)}
+${tile('Saldo do período', null, `<span class="${a.saldo >= 0 ? 'pos' : 'neg'}">${brl(saldoR, true)}</span>`, a.saldo >= 0 ? 'crédito' : 'a pagar')}
+${tile('Retorno por dia', null, econ != null ? brl(econ / a.n) : '—', 'economia média diária', { est })}
+</div>` : '<p class="hint">Informe a tarifa em Ajustes para ver os valores em reais.</p>'}
+</div>`;
+// saldo acumulado
+html += `<div class="card"><h2>Saldo acumulado de créditos</h2>
+${kvRow('No início do período', kwh(a.accStart, true) + (hasT ? ' · ' + brl(money(a.accStart, T, C), true) : ''), a.accStart >= 0 ? 'pos' : 'neg')}
+${kvRow('Variação no período', kwh(a.saldo, true) + (hasT ? ' · ' + brl(saldoR, true) : ''), a.saldo >= 0 ? 'pos' : 'neg')}
+${kvRow('No fim do período', kwh(a.accEnd, true) + (hasT ? ' · ' + brl(money(a.accEnd, T, C), true) : ''), a.accEnd >= 0 ? 'pos' : 'neg')}
+</div>`;
+// conta estimada do ciclo atual
+const today = dayKey(Date.now()), cy = cycleOf(today), ac = aggregate(c, cy.start, cy.end);
+if (ac.n && hasT) {
+const passados = Math.max(1, diffDays(cy.start, today) + 1), total = diffDays(cy.start, cy.end) + 1;
+const credAntes = Math.max(0, ac.accStart);
+const proj = x => x / Math.max(1, ac.n) * total;
+const redeP = proj(ac.rede), injP = proj(ac.inj);
+const fat = Math.max(0, redeP - injP - credAntes);
+const minimo = +db.settings.lig || 50;
+const kfat = Math.max(fat, minimo);
+html += `<div class="card"><h2>Conta estimada · ciclo ${cy.label}</h2>
+${kvRow('Dias com dados no ciclo', ac.n + ' de ' + total)}
+${kvRow('Consumo da rede previsto', kwh(redeP))}
+${kvRow('Injeção prevista', kwh(injP))}
+${kvRow('Créditos de ciclos anteriores', kwh(credAntes))}
+${kvRow('kWh a pagar (mínimo ' + minimo + ')', kwh(kfat))}
+${kvRow('Valor estimado da energia', brl(kfat * T))}
+<p class="hint" style="margin:8px 0 0">Projeção pela média dos dias já lançados. Não inclui iluminação pública, bandeiras tarifárias nem multas.</p>
+</div>`;
+}
+// indicadores
+const comp = a.days.filter(d => d.complete);
+const avg = (arr, f) => arr.length ? arr.reduce((s, d) => s + f(d), 0) / arr.length : null;
+const sol = comp.filter(d => !d.cloudy && d.outH === 0), nub = comp.filter(d => d.cloudy);
+const best = comp.length ? comp.reduce((b, d) => d.inj > b.inj ? d : b, comp[0]) : null;
+let ind = '';
+if (comp.length) {
+ind += kvRow('Média por dia: injetado', kwh(avg(comp, d => d.inj)));
+ind += kvRow('Média por dia: consumo da rede', kwh(avg(comp, d => d.rede)));
+if (a.hasGen) ind += kvRow('Média por dia: geração <span class="est">estimado</span>', kwh(avg(comp, d => d.gen)));
+}
+if (a.hasGen && a.cons > 0) ind += kvRow('Autossuficiência (geração ÷ consumo total)', nf(a.gen / a.cons * 100, 0) + '%');
+if (a.hasGen && a.gen > 0) ind += kvRow('Parte da geração injetada na rede', nf(a.inj / a.gen * 100, 0) + '%');
+if (best) ind += kvRow('Melhor dia de injeção', fmtDay(best.key) + ' · ' + kwh(best.inj));
+if (sol.length && nub.length) {
+const ms = avg(sol, d => d.inj), mn = avg(nub, d => d.inj);
+ind += kvRow(`Injeção média: dia de sol (${sol.length}) × nublado (${nub.length})`, kwh(ms) + ' × ' + kwh(mn));
+if (ms > 0) ind += kvRow('Queda em dia nublado', nf((1 - mn / ms) * 100, 0) + '%');
+}
+ind += kvRow('Dias nublados', a.cloudyN);
+ind += kvRow('Limpezas das placas', a.cleanN);
+ind += kvRow('Faltas de energia', a.outN ? `${a.outN} dia${a.outN > 1 ? 's' : ''} · ${nf(a.outH, a.outH % 1 ? 1 : 0)} h` : '0');
+if (a.outN && db.settings.kwp > 0) ind += kvRow('Geração perdida nas faltas <span class="est">estimado</span>', kwh(a.perda) + (hasT ? ' · ' + brl(a.perda * T) : ''));
+html += `<div class="card"><h2>Indicadores</h2>${ind}</div>`;
+// efeito da limpeza
+const cl = cleaningEffect(c);
+if (cl) html += `<div class="card"><h2>Efeito da última limpeza</h2>
+${kvRow('Limpeza em', fmtDay(cl.key, true))}
+${kvRow(`Injeção média antes (${cl.nb} dias de sol)`, kwh(cl.before))}
+${kvRow(`Injeção média depois (${cl.na} dias de sol)`, kwh(cl.after))}
+${kvRow('Diferença', (cl.after >= cl.before ? '+' : '') + nf((cl.after / cl.before - 1) * 100, 0) + '% · ' + kwh(cl.after - cl.before, true) + ' por dia', cl.after >= cl.before ? 'pos' : 'neg')}
+<p class="hint" style="margin:8px 0 0">Compara até 5 dias de sol antes e depois, sem contar dias nublados ou com falta de energia. O consumo da casa também influencia a injeção.</p></div>`;
+html += `<p class="hint">${est ? 'Valores marcados como “estimado” dependem da potência das placas e do sol do mês (veja Ajustes). ' : ''}Consumo da rede e injeção vêm direto do relógio.</p>`;
+$('#resumoBody').innerHTML = html;
+}
+function cleaningEffect(c) {
+const cleans = db.events.filter(e => e.type === 'limpeza').sort((a, b) => b.t - a.t);
+for (const ev of cleans) {
+const k = dayKey(ev.t);
+const ok = d => d.complete && !d.cloudy && d.outH === 0 && d.clean === 0;
+const before = c.list.filter(d => d.key < k && ok(d)).slice(-5);
+const after = c.list.filter(d => d.key > k && ok(d)).slice(0, 5);
+if (before.length >= 2 && after.length >= 2) {
+const av = arr => arr.reduce((s, d) => s + d.inj, 0) / arr.length;
+const b = av(before), a = av(after);
+if (b > 0) return { key: k, before: b, after: a, nb: before.length, na: after.length };
+}
+}
+return null;
+}
+function emptyHtml() {
+return `<div class="card empty"><p style="margin-top:0">Ainda não há leituras suficientes.</p><p class="hint">Lance pelo menos duas leituras do relógio (códigos 03 e 103) para ver os resultados.</p>
+${db.readings.length === 0 ? '<button class="small" id="btnExemplo">Ver o app com dados de exemplo</button>' : ''}</div>`;
+}
+const NS = 'http://www.w3.org/2000/svg';
+function niceStep(range) { if (range <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(range))); const f = range / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+function scaleY(min, max) {
+min = Math.min(0, min); max = Math.max(0, max);
+if (max === min) max = min + 1;
+const step = niceStep((max - min) / 4);
+const lo = Math.floor(min / step + 1e-9) * step, hi = Math.ceil(max / step - 1e-9) * step;
+const ticks = []; for (let v = lo; v <= hi + step / 2; v += step) ticks.push(+v.toFixed(6));
+return { lo, hi: hi === lo ? lo + step : hi, ticks };
+}
+function shortNum(v) { const a = Math.abs(v); if (a >= 1000) return nf(v / 1000, a >= 10000 ? 0 : 1) + ' mil'; return nf(v, a < 10 && v % 1 ? 1 : 0); }
+function barPath(x, y0, w, h, r) {
+// barra com cantos arredondados só na ponta (longe da base)
+r = Math.min(r, w / 2, Math.abs(h));
+if (Math.abs(h) < 0.5) return '';
+if (h > 0) { const y = y0 - h; return `M${x},${y0}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y0}Z`; }
+const y = y0 - h; return `M${x},${y0}V${y - r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y - r}V${y0}Z`;
+}
+/* opts: {labels, xLabel(i), series:[{name,color,values,colorFn}], fmt, tipTitle(i), tipExtra(i), markers(i)->string, type:'bar'|'line', height} */
+function chart(container, o) {
+container.innerHTML = '';
+const wrap = document.createElement('div'); wrap.className = 'chart'; container.appendChild(wrap);
+const W = Math.max(280, container.clientWidth || 340), Hh = o.height || 200;
+const mk = !!o.markers;
+const m = { l: 40, r: 6, t: 8, b: 22 + (mk ? 16 : 0) };
+const pw = W - m.l - m.r, ph = Hh - m.t - m.b;
+const n = o.labels.length;
+const all = []; o.series.forEach(s => s.values.forEach(v => { if (v != null && isFinite(v)) all.push(v); }));
+const sc = scaleY(all.length ? Math.min(...all) : 0, all.length ? Math.max(...all) : 1);
+const Y = v => m.t + ph - (v - sc.lo) / (sc.hi - sc.lo) * ph;
+const band = pw / Math.max(1, n);
+const X = i => m.l + band * i + band / 2;
+let svg = `<svg xmlns="${NS}" viewBox="0 0 ${W} ${Hh}" height="${Hh}" role="img" aria-label="${esc(o.aria || '')}">`;
+sc.ticks.forEach(v => {
+const y = Y(v);
+svg += `<line x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}" stroke="var(${v === 0 ? '--zero' : '--grid'})" stroke-width="1"/>`;
+svg += `<text x="${m.l - 6}" y="${y + 4}" text-anchor="end">${shortNum(v)}</text>`;
+});
+const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(pw / 52))));
+for (let i = 0; i < n; i++) {
+if (i % every === 0 || (n <= 14)) {
+if (n > 14 && i % every !== 0) continue;
+svg += `<text x="${X(i)}" y="${Hh - (mk ? 20 : 4)}" text-anchor="middle">${esc(o.xLabel(i))}</text>`;
+}
+if (mk) { const s = o.markers(i); if (s) svg += `<text x="${X(i)}" y="${Hh - 2}" text-anchor="middle" style="font-size:10px;fill:var(--text2)">${s}</text>`; }
+}
+if (o.type === 'line') {
+o.series.forEach(s => {
+let d = ''; s.values.forEach((v, i) => { if (v == null) return; d += (d ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(v).toFixed(1); });
+svg += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+if (n <= 40) s.values.forEach((v, i) => { if (v != null) svg += `<circle cx="${X(i)}" cy="${Y(v)}" r="3" fill="${s.color}" stroke="var(--surface)" stroke-width="1.5"/>`; });
+});
+} else {
+const k = o.series.length, gap = 2;
+const bw = Math.max(2, Math.min(18, (band * 0.78 - gap * (k - 1)) / k));
+const gw = bw * k + gap * (k - 1);
+o.series.forEach((s, si) => s.values.forEach((v, i) => {
+if (v == null) return;
+const x = X(i) - gw / 2 + si * (bw + gap);
+const col = s.colorFn ? s.colorFn(v) : s.color;
+const p = barPath(x, Y(0), bw, Y(0) - Y(v), bw >= 6 ? 4 : 1);
+if (p) svg += `<path d="${p}" fill="${col}"/>`;
+}));
+}
+svg += `<line id="xh" x1="0" x2="0" y1="${m.t}" y2="${m.t + ph}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>`;
+svg += `<rect x="${m.l}" y="0" width="${pw}" height="${Hh}" fill="transparent"/>`;
+svg += '</svg>';
+wrap.innerHTML = svg + '<div class="tip"></div>';
+const svgEl = wrap.querySelector('svg'), tip = wrap.querySelector('.tip'), xh = wrap.querySelector('#xh');
+function at(ev) {
+const r = svgEl.getBoundingClientRect(); const px = (ev.clientX - r.left) * W / r.width;
+const i = Math.floor((px - m.l) / band); if (i < 0 || i >= n) { hide(); return; }
+let h = `<div class="h">${esc(o.tipTitle(i))}</div>`;
+o.series.forEach(s => { const v = s.values[i]; h += `<div class="l"><span><i class="dot" style="background:${s.colorFn ? s.colorFn(v || 0) : s.color}"></i>${esc(s.name)}</span><b>${v == null ? '—' : o.fmt(v)}</b></div>`; });
+if (o.tipExtra) { const x = o.tipExtra(i); if (x) h += `<div class="hint" style="margin-top:4px">${x}</div>`; }
+tip.innerHTML = h; tip.style.display = 'block';
+const cx = X(i) * r.width / W; const tw = tip.offsetWidth;
+let left = cx + 12; if (left + tw > r.width) left = cx - tw - 12; if (left < 0) left = 0;
+tip.style.left = left + 'px';
+xh.setAttribute('x1', X(i)); xh.setAttribute('x2', X(i)); xh.style.display = '';
+}
+function hide() { tip.style.display = 'none'; xh.style.display = 'none'; }
+svgEl.addEventListener('pointermove', at);
+svgEl.addEventListener('pointerdown', at);
+svgEl.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
+document.addEventListener('pointerdown', e => { if (!wrap.contains(e.target)) hide(); });
+}
+function legend(items) { return `<div class="legend">${items.map(([c, t]) => `<span><i class="dot" style="background:${c}"></i>${t}</span>`).join('')}</div>`; }
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const MARK = { nub: '☁︎', limp: '✧', falta: '⚡︎' };
+function markersOf(d) { return (d.cloudy ? MARK.nub : '') + (d.clean ? MARK.limp : '') + (d.outH ? MARK.falta : ''); }
+let diaSel = null;
+function renderGraficos() {
+$('#chipsGraf').innerHTML = chipsHtml();
+const c = compute(), body = $('#grafBody');
+if (c.R.length < 2) { body.innerHTML = emptyHtml(); return; }
+let [s, e, label] = rangeOf(periodo, c);
+if (periodo === 'hoje') { s = addDays(e, -6); label = 'Últimos 7 dias'; }
+const a = aggregate(c, s, e);
+const ds = a.days;
+const T = c.T, C = c.C;
+const cInj = css('--inj'), cRede = css('--rede'), cGer = css('--ger'), cPos = css('--pos'), cNeg = css('--neg');
+const hasGen = ds.some(d => d.gen != null);
+const xl = i => fmtDM(ds[i].key);
+const tt = i => fmtDay(ds[i].key, true);
+const extra = i => { const d = ds[i], x = []; if (d.cloudy) x.push('nublado'); if (d.clean) x.push('limpeza'); if (d.outH) x.push('falta de energia ' + nf(d.outH, d.outH % 1 ? 1 : 0) + ' h'); if (!d.readings) x.push('sem leitura neste dia (dividido entre os dias)'); return x.join(' · '); };
+body.innerHTML = `
+<div class="card"><h2>Energia por dia</h2><p class="hint" style="margin:-6px 0 8px">${label} · kWh</p>
+${legend([[cInj, 'Injetado (103)'], [cRede, 'Consumo da rede (03)']].concat(hasGen ? [[cGer, 'Geração (estimada)']] : []))}
+<div id="g1"></div>
+<p class="hint" style="margin:4px 0 0">${MARK.nub} nublado &nbsp; ${MARK.limp} limpeza &nbsp; ${MARK.falta} falta de energia</p>
+<details class="tbl"><summary>Ver tabela</summary><div class="tblwrap"><table><thead><tr><th>Dia</th><th>Injetado</th><th>Rede</th><th>Geração</th><th>Saldo</th></tr></thead><tbody>
+${ds.slice().reverse().map(d => `<tr><td>${fmtDM(d.key)} ${markersOf(d)}</td><td>${nf(d.inj, 1)}</td><td>${nf(d.rede, 1)}</td><td>${d.gen != null ? nf(d.gen, 1) : '—'}</td><td>${nf(d.saldo, 1)}</td></tr>`).join('')}
+</tbody></table></div></details>
+</div>
+<div class="card"><h2>Saldo acumulado de créditos</h2><p class="hint" style="margin:-6px 0 8px">kWh no fim de cada dia (injetado − consumido, desde o início)</p>
+<div id="g2"></div></div>
+${T > 0 ? `<div class="card"><h2>Resultado financeiro por dia</h2><p class="hint" style="margin:-6px 0 8px">R$ · azul = crédito, vermelho = energia a pagar</p>
+${legend([[cPos, 'Saldo positivo'], [cNeg, 'Saldo negativo']])}<div id="g3"></div></div>` : ''}
+${T > 0 && hasGen ? `<div class="card"><h2>Economia por dia</h2><p class="hint" style="margin:-6px 0 8px">R$ · autoconsumo + créditos (estimado)</p><div id="g3b"></div></div>` : ''}
+<div class="card"><h2>Ao longo de um dia</h2>
+<label class="f" style="margin-bottom:8px"><select id="selDia"></select></label>
+<div id="g4"></div><div id="g4info" class="hint"></div></div>
+<div class="card"><h2>Por ciclo da conta</h2><p class="hint" style="margin:-6px 0 8px">kWh por ciclo</p>
+${legend([[cInj, 'Injetado'], [cRede, 'Consumo da rede']].concat(hasGen ? [[cGer, 'Geração (estimada)']] : []))}
+<div id="g5"></div></div>`;
+const ser1 = [{ name: 'Injetado', color: cInj, values: ds.map(d => d.inj) }, { name: 'Rede', color: cRede, values: ds.map(d => d.rede) }];
+if (hasGen) ser1.push({ name: 'Geração', color: cGer, values: ds.map(d => d.gen) });
+chart($('#g1'), { type: ds.length > 14 ? 'line' : 'bar', labels: ds, xLabel: xl, tipTitle: tt, tipExtra: extra, series: ser1, fmt: v => kwh(v), markers: i => markersOf(ds[i]), aria: 'Energia por dia' });
+chart($('#g2'), { type: 'line', labels: ds, xLabel: xl, tipTitle: tt, series: [{ name: 'Saldo acumulado', color: cInj, values: ds.map(d => d.acc) }], fmt: v => kwh(v, true) + (T > 0 ? ' · ' + brl(money(v, T, C), true) : ''), aria: 'Saldo acumulado' });
+if (T > 0) chart($('#g3'), { labels: ds, xLabel: xl, tipTitle: tt, tipExtra: extra, series: [{ name: 'Saldo do dia', colorFn: v => v >= 0 ? cPos : cNeg, values: ds.map(d => money(d.saldo, T, C)) }], fmt: v => brl(v, true), aria: 'Saldo financeiro por dia' });
+if (T > 0 && hasGen) chart($('#g3b'), { labels: ds, xLabel: xl, tipTitle: tt, tipExtra: extra, series: [{ name: 'Economia', color: cGer, values: ds.map(d => d.gen != null ? d.auto * T + d.inj * C : null) }], fmt: v => brl(v), aria: 'Economia por dia' });
+// dia selecionado
+const diasComLeitura = [...new Set(c.R.map(r => dayKey(r.t)))].sort().reverse();
+if (!diaSel || !diasComLeitura.includes(diaSel)) {
+const cnt = k => c.R.filter(r => dayKey(r.t) === k).length;
+diaSel = diasComLeitura.find(k => cnt(k) >= 2) || diasComLeitura[0];
+}
+$('#selDia').innerHTML = diasComLeitura.map(k => `<option value="${k}" ${k === diaSel ? 'selected' : ''}>${fmtDay(k, true)}</option>`).join('');
+$('#selDia').onchange = ev => { diaSel = ev.target.value; renderDia(c); };
+renderDia(c);
+// ciclos
+const cyc = []; const seen = new Map();
+c.list.forEach(d => { const cy = cycleOf(d.key); if (!seen.has(cy.start)) { const o = { cy, inj: 0, rede: 0, gen: 0, genOk: true }; seen.set(cy.start, o); cyc.push(o); } const o = seen.get(cy.start); o.inj += d.inj; o.rede += d.rede; if (d.gen != null) o.gen += d.gen; else o.genOk = false; });
+const cyS = cyc.slice(-12);
+const ser5 = [{ name: 'Injetado', color: cInj, values: cyS.map(o => o.inj) }, { name: 'Rede', color: cRede, values: cyS.map(o => o.rede) }];
+if (hasGen) ser5.push({ name: 'Geração', color: cGer, values: cyS.map(o => o.genOk ? o.gen : null) });
+chart($('#g5'), { labels: cyS, xLabel: i => cyS[i].cy.label, tipTitle: i => 'Ciclo ' + cyS[i].cy.label, series: ser5, fmt: v => kwh(v) + (T > 0 ? '' : ''), tipExtra: i => T > 0 ? 'Saldo: ' + kwh(cyS[i].inj - cyS[i].rede, true) + ' · ' + brl(money(cyS[i].inj - cyS[i].rede, T, C), true) : '', aria: 'Energia por ciclo' });
+}
+function renderDia(c) {
+const k = diaSel; const R = c.R;
+const idx = R.map((r, i) => [r, i]).filter(([r]) => dayKey(r.t) === k);
+if (!idx.length) { $('#g4').innerHTML = ''; return; }
+const firstI = idx[0][1];
+const base = firstI > 0 ? R[firstI - 1] : R[firstI];
+const pts = (firstI > 0 ? [base] : []).concat(idx.map(x => x[0]));
+const cInj = css('--inj'), cRede = css('--rede');
+const labels = pts.map(r => r);
+const lbl = r => (dayKey(r.t) !== k ? fmtDM(dayKey(r.t)) + ' ' : '') + fmtTime(r.t);
+chart($('#g4'), {
+type: 'line', labels, xLabel: i => fmtTime(pts[i].t), tipTitle: i => 'Leitura ' + lbl(pts[i]),
+series: [{ name: 'Injetado (desde a leitura anterior ao dia)', color: cInj, values: pts.map(r => r.r103 - base.r103) }, { name: 'Consumo da rede', color: cRede, values: pts.map(r => r.r03 - base.r03) }],
+fmt: v => kwh(v), tipExtra: i => {
+if (i === 0) return '03: ' + nf(pts[i].r03, 0) + ' · 103: ' + nf(pts[i].r103, 0);
+const a = pts[i - 1], b = pts[i], h = (b.t - a.t) / H;
+return `Neste intervalo (${nf(h, 1)} h): injetou ${kwh(b.r103 - a.r103)} (média ${nf((b.r103 - a.r103) / h, 1)} kW), consumiu ${kwh(b.r03 - a.r03)}.` + (b.obs ? '<br>Obs.: ' + esc(b.obs) : '');
+}, aria: 'Leituras ao longo do dia'
+});
+$('#g4info').innerHTML = legend([[cInj, 'Injetado'], [cRede, 'Consumo da rede']]) + `<span>Acumulado a partir da ${firstI > 0 ? 'leitura anterior (' + lbl(base) + ')' : 'primeira leitura do dia'}. Toque nos pontos para ver a potência média de cada intervalo.</span>`;
+}
+function renderHistorico() {
+const c = compute();
+const byDay = new Map();
+db.readings.forEach(r => { const k = dayKey(r.t); if (!byDay.has(k)) byDay.set(k, { r: [], e: [] }); byDay.get(k).r.push(r); });
+db.events.forEach(e => { const k = dayKey(e.t); if (!byDay.has(k)) byDay.set(k, { r: [], e: [] }); byDay.get(k).e.push(e); });
+const keys = [...byDay.keys()].sort().reverse();
+if (!keys.length) { $('#histBody').innerHTML = emptyHtml(); return; }
+const dm = new Map(c.list.map(d => [d.key, d]));
+$('#histBody').innerHTML = keys.map(k => {
+const g = byDay.get(k), d = dm.get(k);
+g.r.sort((a, b) => a.t - b.t); g.e.sort((a, b) => a.t - b.t);
+return `<div class="card day"><div class="dayh"><b>${fmtDay(k, true)}</b>${d ? `<span class="hint"><i class="dot d-inj"></i> ${kwh(d.inj)} &nbsp;<i class="dot d-rede"></i> ${kwh(d.rede)}</span>` : ''}</div>
+${g.e.map(e => `<span class="evchip">${esc(evLabel(e))}<button data-delev="${e.id}" aria-label="Remover">×</button></span>`).join('')}
+<div class="rd" style="border-top:0;color:var(--text2);font-size:12px"><span>Hora</span><span><i class="code c03">03</i></span><span><i class="code c103">103</i></span><span></span></div>
+${g.r.map(r => `<div class="rd"><span>${fmtTime(r.t)}</span><span>${nf(r.r03, r.r03 % 1 ? 1 : 0)}</span><span>${nf(r.r103, r.r103 % 1 ? 1 : 0)}</span><button data-delr="${r.id}" aria-label="Apagar leitura">×</button>
+${r.ger != null || r.obs ? `<span></span><span class="dd" style="grid-column:2/5">${r.ger != null ? 'Inversor: ' + kwh(r.ger) + ' ' : ''}${r.obs ? esc(r.obs) : ''}</span>` : ''}</div>`).join('')}
+</div>`;
+}).join('');
+}
+document.addEventListener('click', e => {
+const b = e.target.closest('[data-delr]'); if (!b) return;
+if (!b.classList.contains('confirm')) { b.classList.add('confirm'); b.textContent = 'apagar?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('confirm'); b.textContent = '×'; } }, 3000); return; }
+db.readings = db.readings.filter(x => x.id !== b.dataset.delr); save(); toast('Leitura apagada.'); render();
+});
+function renderAjustes() {
+const S = db.settings;
+const setv = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
+setv('#sTarifa', S.tarifa ? nf(S.tarifa, 4).replace(/0+$/, '').replace(/,$/, '') : '');
+setv('#sCred', nf(S.credPct, S.credPct % 1 ? 1 : 0));
+setv('#sKwp', S.kwp ? nf(S.kwp, S.kwp % 1 ? 2 : 0) : '');
+setv('#sPr', nf(S.pr, 0));
+setv('#sNub', nf(S.perdaNublado, 0));
+setv('#sDia', S.diaLeitura);
+setv('#sSaldoIni', S.saldoIni ? nf(S.saldoIni, S.saldoIni % 1 ? 1 : 0) : '');
+$('#sLig').value = String(S.lig);
+const g = $('#hspGrid');
+if (!g.children.length) g.innerHTML = MESES.map((m, i) => `<label>${m}<input data-hsp="${i}" inputmode="decimal"></label>`).join('');
+g.querySelectorAll('input').forEach(inp => { if (document.activeElement !== inp) inp.value = nf(S.hsp[+inp.dataset.hsp], 1); });
+const n = db.readings.length, ne = db.events.length;
+const R = sortedReadings();
+$('#infoDados').textContent = n ? `${n} leitura${n > 1 ? 's' : ''} e ${ne} ocorrência${ne !== 1 ? 's' : ''}, de ${fmtDay(dayKey(R[0].t), true)} a ${fmtDay(dayKey(R[n - 1].t), true)}.` : 'Nenhuma leitura ainda.';
+}
+function bindSetting(id, key, opts) {
+$(id).addEventListener('change', ev => {
+let v = parseNum(ev.target.value);
+if (v == null) v = defSettings()[key];
+if (opts && opts.min != null) v = Math.max(opts.min, v);
+if (opts && opts.max != null) v = Math.min(opts.max, v);
+if (opts && opts.int) v = Math.round(v);
+db.settings[key] = v; save(); toast('Ajuste salvo.'); render();
+});
+}
+bindSetting('#sTarifa', 'tarifa', { min: 0 });
+bindSetting('#sCred', 'credPct', { min: 0, max: 100 });
+bindSetting('#sKwp', 'kwp', { min: 0 });
+bindSetting('#sPr', 'pr', { min: 30, max: 100 });
+bindSetting('#sNub', 'perdaNublado', { min: 0, max: 100 });
+bindSetting('#sDia', 'diaLeitura', { min: 1, max: 28, int: true });
+bindSetting('#sSaldoIni', 'saldoIni', {});
+$('#sLig').addEventListener('change', ev => { db.settings.lig = +ev.target.value; save(); toast('Ajuste salvo.'); render(); });
+$('#hspGrid').addEventListener('change', ev => {
+const i = ev.target.dataset.hsp; if (i == null) return;
+const v = parseNum(ev.target.value); db.settings.hsp[+i] = v != null && v > 0 && v < 12 ? v : HSP_DEF[+i]; save(); toast('Ajuste salvo.'); render();
+});
+function fileName(ext) { const d = new Date(); return `monitor-solar-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.${ext}`; }
+async function deliver(content, name, type) {
+const blob = new Blob([content], { type });
+try {
+const file = new File([blob], name, { type });
+if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return; }
+} catch (e) { if (e && e.name === 'AbortError') return; }
+const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+$('#btnBackup').onclick = () => { const d = Object.assign({}, db); delete d.sample; deliver(JSON.stringify({ app: 'monitor-solar', versao: 1, criado: new Date().toISOString(), dados: d }, null, 1), fileName('json'), 'application/json'); };
+$('#btnImport').onclick = () => $('#fileImport').click();
+$('#fileImport').onchange = async ev => {
+const f = ev.target.files[0]; if (!f) return;
+try {
+const j = JSON.parse(await f.text());
+const d = j && j.dados ? j.dados : j;
+if (!d || !Array.isArray(d.readings)) throw new Error('formato');
+const ids = new Set(db.readings.map(r => r.id)), eids = new Set(db.events.map(e => e.id));
+let nr = 0, ne = 0;
+d.readings.forEach(r => { if (r && r.id && !ids.has(r.id) && isFinite(r.t) && isFinite(r.r03) && isFinite(r.r103)) { db.readings.push(r); nr++; } });
+(d.events || []).forEach(e => { if (e && e.id && !eids.has(e.id) && isFinite(e.t)) { db.events.push(e); ne++; } });
+if (d.settings) db.settings = Object.assign(defSettings(), db.settings, d.settings);
+save(); toast(`Backup restaurado: ${nr} leituras e ${ne} ocorrências adicionadas.`); render();
+} catch (e) { toast('Não consegui ler esse arquivo. Escolha o backup .json gerado pelo app.'); }
+ev.target.value = '';
+};
+$('#btnCsv').onclick = () => {
+const c = compute(); const T = c.T, C = c.C;
+const n2 = v => v == null ? '' : nf(v, 2).replace(/\./g, '');
+const head = ['Data', 'Consumo da rede 03 (kWh)', 'Injetado 103 (kWh)', 'Geração (kWh)', 'Origem geração', 'Autoconsumo (kWh)', 'Consumo total (kWh)', 'Saldo do dia (kWh)', 'Saldo acumulado (kWh)', 'Custo rede (R$)', 'Créditos (R$)', 'Economia (R$)', 'Saldo do dia (R$)', 'Nublado', 'Limpeza', 'Falta energia (h)', 'Teve leitura'];
+const rows = c.list.map(d => [fmtDM(d.key) + '/' + d.key.slice(0, 4), n2(d.rede), n2(d.inj), n2(d.gen), d.genSrc || '', n2(d.auto), n2(d.cons), n2(d.saldo), n2(d.acc), n2(d.rede * T), n2(d.inj * C), d.gen != null ? n2(d.auto * T + d.inj * C) : '', n2(money(d.saldo, T, C)), d.cloudy ? 'sim' : '', d.clean ? 'sim' : '', d.outH ? n2(d.outH) : '', d.readings ? 'sim' : 'não']);
+const lines = [head].concat(rows).map(r => r.map(x => /[;"\n]/.test(x) ? '"' + String(x).replace(/"/g, '""') + '"' : x).join(';'));
+lines.push(''); lines.push('Leituras');
+lines.push(['Data', 'Hora', 'Código 03', 'Código 103', 'Inversor (kWh)', 'Observação'].join(';'));
+sortedReadings().forEach(r => lines.push([fmtDM(dayKey(r.t)) + '/' + dayKey(r.t).slice(0, 4), fmtTime(r.t), n2(r.r03), n2(r.r103), n2(r.ger), (r.obs || '').replace(/[;\n]/g, ',')].join(';')));
+deliver('﻿' + lines.join('\r\n'), fileName('csv'), 'text/csv');
+};
+$('#btnApagar').onclick = ev => {
+const b = ev.currentTarget;
+if (!b.dataset.c) { b.dataset.c = '1'; b.textContent = 'Toque de novo para apagar TUDO (faça backup antes)'; b.classList.add('warnbtn'); setTimeout(() => { delete b.dataset.c; b.textContent = 'Apagar todos os dados'; b.classList.remove('warnbtn'); }, 4000); return; }
+db = { readings: [], events: [], settings: defSettings() }; save();
+delete b.dataset.c; b.textContent = 'Apagar todos os dados'; b.classList.remove('warnbtn');
+['#hspGrid'].forEach(s => $(s).innerHTML = '');
+toast('Todos os dados foram apagados.'); render();
+};
+function loadSample() {
+const now = new Date(); const today = dayKey(now.getTime());
+let r03 = 10230, r103 = 21450; const R = [], E = [];
+const start = addDays(today, -34);
+for (let i = 0; i <= 34; i++) {
+const k = addDays(start, i), ds = dayStart(k);
+const cloudy = [3, 4, 11, 19, 20, 27].includes(i), clean = i === 14, falta = i === 23 ? 3 : 0;
+const dirt = clean || i > 14 ? 1 - Math.max(0, i - 14) * 0.004 : 1 - i * 0.004 - 0.05;
+const genDay = 10 * 5.5 * 0.8 * (cloudy ? 0.45 : 1) * (1 - falta / 12) * dirt * (0.94 + ((i * 37) % 11) / 100);
+const consDay = 26 + ((i * 13) % 9);
+const times = [7.2, 12.5, 17.8];
+let lastH = 0;
+times.forEach((h, j) => {
+const t = ds + h * H + ((i * 7 + j * 11) % 20) * 60e3;
+if (t > Date.now()) return;
+// fração do sol e do consumo desde a última leitura
+const sunFrac = j === 0 ? 0.04 : j === 1 ? 0.48 : 0.48;
+const gen = genDay * sunFrac;
+const consFrac = j === 0 ? (h + 24 - 17.8) / 24 : (h - lastH) / 24;
+const cons = consDay * consFrac;
+const self = Math.min(gen, cons * (j === 0 ? 0.1 : 0.8));
+r103 += Math.max(0, gen - self); r03 += Math.max(0, cons - self);
+R.push({ id: uid(), t, r03: Math.round(r03), r103: Math.round(r103) });
+lastH = h;
+});
+if (cloudy) E.push({ id: uid(), type: 'nublado', t: ds + 12 * H });
+if (clean) E.push({ id: uid(), type: 'limpeza', t: ds + 9 * H });
+if (falta) E.push({ id: uid(), type: 'falta', t: ds + 13 * H, horas: falta });
+}
+db = { readings: R, events: E, settings: Object.assign(defSettings(), { tarifa: 0.95, kwp: 10, saldoIni: 0, lig: 100 }), sample: true };
+save(); toast('Dados de exemplo carregados.'); render();
+}
+document.addEventListener('click', e => { if (e.target.id === 'btnExemplo') loadSample(); if (e.target.id === 'btnSairExemplo') { db = { readings: [], events: [], settings: defSettings() }; save(); $('#hspGrid').innerHTML = ''; toast('Exemplo apagado. Pode começar com suas leituras.'); show('lancar'); } });
+function render() {
+$('#sampleBanner').innerHTML = db.sample ? `<div class="banner"><b>Você está vendo dados de exemplo</b> (10 kWp, tarifa R$ 0,95). Quando quiser começar de verdade, apague o exemplo.<br><button class="small" id="btnSairExemplo">Apagar exemplo e começar</button></div>` : '';
+if (view === 'lancar') renderLancar();
+else if (view === 'resumo') renderResumo();
+else if (view === 'graficos') renderGraficos();
+else if (view === 'historico') renderHistorico();
+else if (view === 'ajustes') renderAjustes();
+}
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (view === 'graficos') renderGraficos(); }, 200); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && view === 'lancar' && !$('#f03').value && !$('#f103').value) { setNow(); render(); } });
+setNow(); render();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
